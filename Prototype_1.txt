@@ -1,0 +1,51 @@
+import pyrebase
+from picamera import PiCamera
+from datetime import datetime
+from time import sleep
+
+firebaseConfig = {
+  "apiKey": "AIzaSyAHz3uxdA16oFtBFsxau0hHFkoD2XRr2VA",
+  "authDomain": "python-raspberry-pi-proj-2b608.firebaseapp.com",
+  "databaseURL": "https://python-raspberry-pi-proj-2b608-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "projectId": "python-raspberry-pi-proj-2b608",
+  "storageBucket": "python-raspberry-pi-proj-2b608.appspot.com",
+  "messagingSenderId": "312393792580",
+  "appId": "1:312393792580:web:291111ef703f5fa3e85011",
+  "measurementId": "G-E0D5BCEVQE"
+}
+
+firebase = pyrebase.initialize_app(firebaseConfig)
+storage = firebase.storage()
+
+camera = PiCamera()
+
+now = datetime.now()
+timestamp = now.strftime("%d-%m-%Y %H:%M:%S")
+name = timestamp
+file = name + ".h264"
+
+try:
+    print("Recording started..")
+    camera.annotate_text = timestamp
+    camera.start_recording(f'/home/rasp/pythonproject/{file}')
+    sleep(10)
+    camera.stop_recording()
+    print("Record ended..")
+
+    print("Video with filename " + "\"" + file + "\"" + " has been saved..")
+    
+    print("File is being uploaded to cloud.. Please wait..")
+    storage.child(f'{file}').put(f'{file}')
+    print("File uploaded to cloud successfully..")
+
+    #os.remove(file)
+    #print("File removed from local storage..")
+
+    sleep(2)
+    
+    camera.close()
+
+except Exception as err:
+    print(err)
+    camera.close()
+    exit()
