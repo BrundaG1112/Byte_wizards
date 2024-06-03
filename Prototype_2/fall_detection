@@ -1,0 +1,61 @@
+CODE
+#include <Wire.h>
+#include <MPU6050.h>
+
+MPU6050 mpu;
+
+const int fallThreshold = 20000;  // Adjust this threshold based on testing
+const int numReadings = 10;       // Number of readings for averaging
+int16_t ax, ay, az;
+long accelerationMagnitude;
+long ax_total = 0, ay_total = 0, az_total = 0;
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+  mpu.initialize();
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed");
+    while (1);
+  }
+  Serial.println("MPU6050 connection successful");
+}
+
+void loop() {
+  ax_total = 0;
+  ay_total = 0;
+  az_total = 0;
+
+  // Take multiple readings to average out the noise
+  for (int i = 0; i < numReadings; i++) {
+    mpu.getAcceleration(&ax, &ay, &az);
+    ax_total += ax;
+    ay_total += ay;
+    az_total += az;
+    delay(10);  // Short delay between readings
+  }
+
+  // Calculate the average acceleration values
+  ax = ax_total / numReadings;
+  ay = ay_total / numReadings;
+  az = az_total / numReadings;
+
+  // Calculate the magnitude of the acceleration vector
+  accelerationMagnitude = sqrt((long)ax * ax + (long)ay * ay + (long)az * az);
+
+  // Check if the magnitude exceeds the fall threshold
+  if (accelerationMagnitude > fallThreshold) {
+    Serial.println("Fall detected!");
+  } else {
+    Serial.println("No fall detected.");
+  }
+
+  // Print the raw acceleration values and magnitude for debugging
+  Serial.print("Acceleration X: "); Serial.print(ax);
+  Serial.print(" | Acceleration Y: "); Serial.print(ay);
+  Serial.print(" | Acceleration Z: "); Serial.print(az);
+  Serial.print(" | Magnitude: "); Serial.println(accelerationMagnitude);
+
+  delay(100);  // Adjust delay as needed
+}
+
